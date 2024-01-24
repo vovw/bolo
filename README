@@ -1,8 +1,27 @@
 ---------------------WIP------------------------
 a dead simple sst and tts combo, that just works.
 
+THE STACK
+- whisper ~ tiny and small
+- llm ~ modular
+- tts ~ piper or vits
 
 Uses
+
 - make robots talk
-- make your ai waifu talk
-- make your toaster talk
+- make your ai waifu confess for you
+- make your toaster scream
+
+HOW TO
+
+download the base.en model using models/download-ggml-model.sh
+
+$ make bolo && ./bolo
+
+RODEMAP
+
+[ ] "hey google" like text to speech, in command format
+[ ] way to get most sane llms working (llama.cpp, openai, etc)
+[ ] speech to text
+[ ] stop commond for tts
+[ ] make this work on shitty hardware, optimize the fuck out of this.
