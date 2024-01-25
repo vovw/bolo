@@ -340,7 +340,7 @@ int process_general_transcription(struct whisper_context * ctx, audio_async & au
     std::vector<float> pcmf32_cur;
     std::vector<float> pcmf32_prompt;
 
-    std::string k_prompt = "Okay, milk.";
+    std::string k_prompt = "Okay, whisper.";
     if (!params.prompt.empty()) {
         k_prompt = params.prompt;
     }
