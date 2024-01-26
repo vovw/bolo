@@ -18,6 +18,12 @@ download the base.en model using models/download-ggml-model.sh
 
 $ make bolo && ./bolo
 
+
+TODO
+
+[ ] making suno actually work
+[ ] metal optimization
+
 RODEMAP
 
 [ ] "hey google" like text to speech, in command format

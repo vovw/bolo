@@ -348,7 +348,7 @@ libwhisper.so: $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) -shared -o libwhisper.so $(WHISPER_OBJ) $(LDFLAGS)
 
 clean:
-	rm -f *.o stream bolo libwhisper.a libwhisper.so
+	rm -f *.o stream bolo suno libwhisper.a libwhisper.so
 
 #
 # Examples
@@ -361,6 +361,10 @@ SRC_COMMON_SDL = examples/common-sdl.cpp
 
 bolo: src/sst.cpp examples/grammar-parser.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) src/sst.cpp examples/grammar-parser.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o bolo $(CC_SDL) $(LDFLAGS)
+
+
+suno: src/suno.cpp examples/grammar-parser.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
+	$(CXX) $(CXXFLAGS) src/suno.cpp examples/grammar-parser.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o suno $(CC_SDL) $(LDFLAGS)
 
 stream: examples/stream/stream.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/stream.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) $(WHISPER_OBJ) -o stream $(CC_SDL) $(LDFLAGS)
