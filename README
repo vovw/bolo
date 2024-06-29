@@ -1,33 +1,6 @@
----------------------WIP------------------------
-a dead simple sst and tts combo, that just works.
+wip 
 
-THE STACK
-- whisper ~ tiny and small
-- llm ~ modular
-- tts ~ piper or vits
+a multilingual input ouput and action voice agent system
 
-Uses
+build for karta.
 
-- make robots talk
-- make your ai waifu confess for you
-- make your toaster scream
-
-HOW TO
-
-download the base.en model using models/download-ggml-model.sh
-
-$ make bolo && ./bolo
-
-
-TODO
-
-[ ] making suno actually work
-[ ] metal optimization
-
-RODEMAP
-
-[ ] "hey google" like text to speech, in command format
-[ ] way to get most sane llms working (llama.cpp, openai, etc)
-[ ] speech to text
-[ ] stop commond for tts
-[ ] make this work on shitty hardware, optimize the fuck out of this.
