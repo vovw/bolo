@@ -4,3 +4,6 @@ a multilingual input ouput and action voice agent system
 
 build for karta.
 
+
+thing to run server 
+mlx_lm.server --model mlx-community/aya-23-8B-4bit
