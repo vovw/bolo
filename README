@@ -2,8 +2,14 @@ wip
 
 a multilingual input ouput and action voice agent system
 
-build for karta.
+[ ] write out own inference
+[ ] expirement with MahaTTS.
+
+build for <redacted>
 
 
-thing to run server 
+# server
 mlx_lm.server --model mlx-community/aya-23-8B-4bit
+or 
+llama cpp server
+

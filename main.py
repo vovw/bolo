@@ -1,27 +1,29 @@
+from openai import OpenAI
+import json
 import time
 import pyaudio
 import numpy as np
 import os
 import re
-from lightning_whisper_mlx import LightningWhisperMLX
+#import whisper
+import mlx_whisper
 from pynput import keyboard
-import subprocess
 import requests
-import json
 
-# Load the system message from a file
+import re
+import subprocess
+
 with open("prompt.txt", 'r', encoding='utf-8') as file:
     SYSTEM_MESSAGE = file.read().strip()
 
-# Initialize the Whisper model for speech recognition
-whisper = LightningWhisperMLX(model="large-v3", batch_size=12, quant=None)
-
-# MLX LM server URL
-MLX_LM_URL = "http://localhost:8080/v1/chat/completions"
+API_URL = "http://127.0.0.1:8080"
+#asr_model = whisper.load_model("medium")
 
 def merge_short_sentences(sens):
     sens_out = []
     for s in sens:
+        # If the previous sentence is too short, merge them with
+        # the current sentence.
         if len(sens_out) > 0 and len(sens_out[-1].split(" ")) <= 2:
             sens_out[-1] = sens_out[-1] + " " + s
         else:
@@ -34,14 +36,18 @@ def merge_short_sentences(sens):
         pass
     return sens_out
 
+
+
 def split_sentences(text, min_len=10):
+    # deal with dirty sentences
     text = re.sub('[。！？；]', '.', text)
     text = re.sub('[，]', ',', text)
-    text = re.sub('[""]', '"', text)
-    text = re.sub('['']', "'", text)
+    text = re.sub('[“”]', '"', text)
+    text = re.sub('[‘’]', "'", text)
     text = re.sub(r"[\<\>\(\)\[\]\"\«\»]+", "", text)
     text = re.sub('[\n\t ]+', ' ', text)
     text = re.sub('([,.!?;])', r'\1 $#!', text)
+    # split
     sentences = [s.strip() for s in text.split('$#!')]
     if len(sentences[-1]) == 0: del sentences[-1]
 
@@ -49,6 +55,7 @@ def split_sentences(text, min_len=10):
     new_sent = []
     count_len = 0
     for ind, sent in enumerate(sentences):
+        # print(sent)
         new_sent.append(sent)
         count_len += len(sent.split(" "))
         if count_len > min_len or ind == len(sentences) - 1:
@@ -57,11 +64,17 @@ def split_sentences(text, min_len=10):
             new_sent = []
     return merge_short_sentences(new_sentences)
 
+
 def play_audio(text):
     texts = split_sentences(text)
+    # texts = text
     for t in texts:
         t = re.sub(r'([a-z])([A-Z])', r'\1 \2', t)
-        subprocess.call(['say', '-v', 'Karen', t])
+        # Assuming tts_model.get_text(t, tts_model.hps, False) returns the text to be spoken
+        # stn_tst = tts_model.get_text(t, tts_model.hps, False)
+        # Use the macOS say command to speak the text
+        subprocess.call(['say', '-v', 'Lekha', t])
+
 
 def record_and_transcribe_audio():
     recording = False
@@ -90,12 +103,14 @@ def record_and_transcribe_audio():
     stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, frames_per_buffer=1024, input=True)
     frames = []
     while recording:
-        data = stream.read(1024, exception_on_overflow=False)
+        data = stream.read(1024, exception_on_overflow = False)
         frames.append(np.frombuffer(data, dtype=np.int16))
     print('Finished recording')
 
     data = np.hstack(frames, dtype=np.float32) / 32768.0 
-    result = whisper.transcribe(data)['text']
+    #result = asr_model.transcribe(data)['text']
+    result = mlx_whisper.transcribe(data, path_or_hf_repo="mlx-community/whisper-large-v3-mlx")['text']
+    print(result)
     stream.stop_stream()
     stream.close()
     p.terminate()
@@ -107,25 +122,51 @@ def conversation():
         user_input = record_and_transcribe_audio()
         conversation_history.append({'role': 'user', 'content': user_input})
 
-        try:
-            response = client.chat.completions.create(
-                model="mistral",  # The model name isn't used by the server, but is required by the client
-                messages=conversation_history,
-                temperature=0.7,
-                max_tokens=100
-            )
-            chatbot_response = response.choices[0].message.content
-            conversation_history.append({'role': 'assistant', 'content': chatbot_response})
-            print(conversation_history)
-            play_audio(chatbot_response)
+        response = requests.post(
+            f"{API_URL}/completion",
+            json={
+                "prompt": format_prompt(conversation_history),
+                "n_predict": 512,
+                "temperature": 0.7,
+                "stop": ["\nHuman:", "\nAssistant:"],
+                "stream": True
+            },
+            stream=True
+        )
 
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            # You might want to implement a retry mechanism or fallback behavior here
+        if response.status_code != 200:
+            print(f"Error: {response.status_code}")
+            print(response.text)
+            continue
+
+        chatbot_response = ""
+        for line in response.iter_lines():
+            if line:
+                line = line.decode('utf-8')
+                if line.startswith("data: "):
+                    data = json.loads(line[6:])
+                    if 'content' in data:
+                        chatbot_response += data['content']
+                        print(data['content'], end='', flush=True)
+
+        print()  # New line after the complete response
+        conversation_history.append({'role': 'assistant', 'content': chatbot_response})
+        play_audio(chatbot_response)
 
         if len(conversation_history) > 20:
             conversation_history = conversation_history[-20:]
 
-if __name__ == '__main__':
-    conversation()
+def format_prompt(conversation_history):
+    formatted_prompt = ""
+    for message in conversation_history:
+        if message['role'] == 'system':
+            formatted_prompt += f"System: {message['content']}\n\n"
+        elif message['role'] == 'user':
+            formatted_prompt += f"Human: {message['content']}\n"
+        elif message['role'] == 'assistant':
+            formatted_prompt += f"Assistant: {message['content']}\n"
+    formatted_prompt += "Assistant:"
+    return formatted_prompt
 
+if __name__=='__main__':
+    conversation()
